@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .webboard-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            max-width: 1000px;
+            margin: auto;
+        }
+        .room-card {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .room-card:hover {
+            transform: scale(1.02);
+        }
+        .thread-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="webboard-container">
+        <h2 class="text-center mb-4">Webboard</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="text-center mb-4">
+            <p>ยินดีต้อนรับ, {{ session.username }}!</p>
+            <a href="{{ url_for('profile') }}" class="btn btn-secondary">โปรไฟล์</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">ออกจากระบบ</a>
+        </div>
+        <h4>ห้องสนทนา</h4>
+        {% for room in rooms %}
+        <div class="room-card">
+            <h5><a href="{{ url_for('room', room=room) }}" class="text-light">{{ room }}</a></h5>
+            <a href="{{ url_for('create_thread', room=room) }}" class="btn btn-primary btn-sm mb-3">ตั้งกระทู้</a>
+            {% if threads_by_room[room] %}
+                {% for thread in threads_by_room[room] %}
+                <div class="thread-card">
+                    <h6><a href="{{ url_for('thread', thread_id=thread[0]) }}" class="text-light">{{ thread[1] }}</a></h6>
+                    <p class="small">โดย {{ thread[3] }} | {{ thread[4] }} | ดู: {{ thread[2] }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="small text-center">ยังไม่มีกระทู้ในห้องนี้</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary w-100 mt-3">กลับไปที่ Dashboard</a>
+    </div>
+</body>
+</html>

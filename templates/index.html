@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        .clock-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .clock {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            width: 300px;
+            transition: transform 0.3s;
+        }
+        .clock:hover {
+            transform: scale(1.05);
+        }
+        .clock h2 {
+            font-size: 1.8em;
+            margin: 0;
+            color: #00ffcc;
+        }
+        .clock p {
+            font-size: 2em;
+            margin: 10px 0;
+            color: #ffd700;
+        }
+        .signals {
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .signal {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .uptrend {
+            color: #00ff00;
+        }
+        .downtrend {
+            color: #ff0000;
+        }
+        .update-time {
+            text-align: center;
+            font-size: 0.8em;
+            margin-top: 20px;
+            color: #ccc;
+        }
+        .countdown {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 10px;
+            color: #ffd700;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crypto Trading Dashboard</h1>
+        <div class="clock-container">
+            {% for item in data %}
+            <div class="clock">
+                <h2>{{ item.symbol }}</h2>
+                <p id="price-{{ item.symbol }}">
+                    {% if item.price != 'Error' %}
+                        ${{ item.price | float | round(2) }}
+                    {% else %}
+                        Error
+                    {% endif %}
+                </p>
+                <div class="signals">
+                    {% for signal in item.signals %}
+                    <div class="signal {{ 'uptrend' if 'Uptrend' in signal else 'downtrend' if 'Downtrend' in signal else '' }}">
+                        {{ signal }}
+                    </div>
+                    {% endfor %}
+                    <div>Entry Price: {{ item.entry_price }}</div>
+                    <div>Stop Loss: {{ item.stop_loss }}</div>
+                    <div>Take Profit: {{ item.take_profit }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="update-time">Last updated: {{ data[0].timestamp }}</div>
+        <div class="countdown">Next update in: <span id="countdown">30:00</span></div>
+    </div>
+
+    <script>
+        // ฟังก์ชันนับถอยหลัง
+        function startCountdown() {
+            let timeLeft = 1800; // 30 นาที (1800 วินาที)
+            const countdownElement = document.getElementById('countdown');
+
+            const countdownInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                countdownElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                if (timeLeft <= 0) {
+                    timeLeft = 1800; // รีเซ็ตเป็น 30 นาที
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        // เริ่มนับถอยหลังเมื่อหน้าโหลด
+        startCountdown();
+
+        // อัปเดตข้อมูลทุก 30 วินาที
+        setInterval(() => {
+            fetch('/').then(response => response.text()).then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                document.querySelector('.clock-container').innerHTML = doc.querySelector('.clock-container').innerHTML;
+                document.querySelector('.update-time').innerHTML = doc.querySelector('.update-time').innerHTML;
+            });
+        }, 30000);
+
+        // เพิ่มแอนิเมชันเมื่อราคาเปลี่ยน
+        function animatePrice(element, newPrice) {
+            element.style.transition = 'color 0.5s';
+            element.style.color = '#ff4500';
+            setTimeout(() => {
+                element.style.color = '#ffd700';
+            }, 500);
+            element.textContent = newPrice.includes('Error') ? 'Error' : `$${parseFloat(newPrice).toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>
